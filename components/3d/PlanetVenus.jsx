@@ -1,22 +1,18 @@
-// ============================================================
-// components/3d/PlanetVenus.jsx
-// Rôle : Section 2 - Projets Logiciels & Équipe (2021-2022)
-// Dépendances : @react-three/fiber, @react-three/drei, three
-// ============================================================
 'use client'
 
 import { useRef, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { Html, useTexture } from '@react-three/drei'
 
 export default function PlanetVenus({ position = [0, 0, -60] }) {
   const meshRef = useRef()
   const geometryRef = useRef()
   const materialRef = useRef()
+  const textRef = useRef()
+  const { camera } = useThree()
 
   const [colorMap] = useTexture(['/textures/venus_color.webp'])
 
-  // --- ÉTATS POUR L'INTERACTIVITÉ ---
   const isDragging = useRef(false)
   const previousMouseX = useRef(0)
   const targetRotation = useRef(0)
@@ -24,7 +20,6 @@ export default function PlanetVenus({ position = [0, 0, -60] }) {
   const currentSpeed = useRef(0.1)
   const baseSpeed = 0.1
 
-  // NETTOYAGE MÉMOIRE OBLIGATOIRE
   useEffect(() => {
     return () => {
       if (geometryRef.current) geometryRef.current.dispose()
@@ -34,14 +29,12 @@ export default function PlanetVenus({ position = [0, 0, -60] }) {
     }
   }, [colorMap])
 
-  // --- GESTIONNAIRES D'ÉVÉNEMENTS SOURIS ---
   const handlePointerDown = (e) => {
     e.stopPropagation()
     isDragging.current = true
     previousMouseX.current = e.clientX
     document.body.style.cursor = 'grabbing'
     e.target.setPointerCapture(e.pointerId)
-    
     if (meshRef.current) {
       targetRotation.current = meshRef.current.rotation.y
       lastTargetRotation.current = meshRef.current.rotation.y
@@ -66,10 +59,10 @@ export default function PlanetVenus({ position = [0, 0, -60] }) {
     targetRotation.current += deltaX * 0.01
   }
 
-  // --- BOUCLE DE RENDU (Inertie) ---
   useFrame((_, delta) => {
     if (!meshRef.current) return
 
+    // 1. Inertie de rotation
     if (isDragging.current) {
       currentSpeed.current = (targetRotation.current - lastTargetRotation.current) / delta
       lastTargetRotation.current = targetRotation.current
@@ -78,8 +71,22 @@ export default function PlanetVenus({ position = [0, 0, -60] }) {
       targetRotation.current += currentSpeed.current * delta
       lastTargetRotation.current = targetRotation.current
     }
-
     meshRef.current.rotation.y += (targetRotation.current - meshRef.current.rotation.y) * 15 * delta
+
+    // 2. NOUVELLE LOGIQUE D'APPARITION (Basée sur l'axe Z de la caméra)
+    if (textRef.current) {
+      // La caméra avance vers les Z négatifs.
+      // Mercure est à -30. On commence à afficher Vénus quand la caméra dépasse -35.
+      // L'opacité passe de 0 à 1 entre z = -35 et z = -45.
+      let opacity = 0
+      if (camera.position.z <= -35) {
+        opacity = (-35 - camera.position.z) / 10 // Calcul du fondu sur 10 unités de distance
+        opacity = Math.max(0, Math.min(1, opacity)) // Bloque la valeur entre 0 et 1
+      }
+      
+      textRef.current.style.opacity = opacity
+      textRef.current.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none'
+    }
   })
 
   return (
@@ -91,60 +98,42 @@ export default function PlanetVenus({ position = [0, 0, -60] }) {
         onPointerOver={handlePointerOver}
         onPointerMove={handlePointerMove}
       >
-        {/* Vénus est légèrement plus grande que Mercure (rayon 1.8) */}
-        <sphereGeometry ref={geometryRef} args={[1.8, 64, 64]} />
+        <sphereGeometry ref={geometryRef} args={[2, 64, 64]} />
         <meshStandardMaterial
           ref={materialRef}
           map={colorMap}
-          roughness={0.6} // Atmosphère plus lisse
+          roughness={0.6}
           metalness={0.1}
         />
       </mesh>
 
-      {/* TEXTE FLOTTANT 3D - Placé à gauche (x=-3.5) pour alterner avec Mercure */}
-      <Html
-        position={[-3.5, 0, 2]}
-        center
-        distanceFactor={15}
-        zIndexRange={[100, 0]}
-        style={{ pointerEvents: 'none' }} 
-      >
-        <div style={{ 
-          color: 'white', 
-          width: '380px', 
-          background: 'rgba(10, 10, 10, 0.8)', 
-          padding: '20px', 
-          borderRadius: '12px', 
-          border: '1px solid rgba(255, 200, 100, 0.4)',
-          backdropFilter: 'blur(4px)',
-          fontFamily: 'sans-serif',
-          pointerEvents: 'auto'
-        }}>
-          <h1 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', color: '#ffcc66' }}>
-            Projets Logiciels & Équipe
-          </h1>
-          <h2 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#aaa' }}>
-            2021 - 2022
-          </h2>
+      <Html position={[-3.5, 0, 2]} center distanceFactor={15} zIndexRange={[100, 0]}>
+        <div 
+          ref={textRef}
+          // J'ai mis opacity-0 par défaut pour qu'il soit invisible au tout premier chargement
+          className="w-[380px] opacity-0 bg-black/80 p-5 rounded-xl border border-yellow-500/40 backdrop-blur-md transition-opacity duration-75"
+        >
+          <h1 className="text-xl font-bold text-yellow-400 mb-1">Du Code qui a un Impact</h1>
+          <h2 className="text-sm text-gray-400 mb-4">2021 – 2022 · Travail d'équipe & Livraisons réelles</h2>
           
-          <div style={{ marginBottom: '12px' }}>
-            <strong style={{ color: '#fff' }}>Climate Simulator (Python)</strong>
-            <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', lineHeight: '1.4', color: '#ddd' }}>
-              Développement en équipe d'un jeu sérieux pour sensibiliser à l'adaptation agricole face au changement climatique.
+          <div className="mb-3">
+            <strong className="text-white">Climate Simulator</strong>
+            <p className="text-sm text-gray-300 leading-relaxed mt-1 m-0">
+              Développement Python en équipe agile d'un jeu sérieux destiné à la sensibilisation climatique agricole — de la modélisation de données à la livraison d'un produit fonctionnel.
             </p>
           </div>
 
-          <div style={{ marginBottom: '12px' }}>
-            <strong style={{ color: '#fff' }}>Juego de Calamar</strong>
-            <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', lineHeight: '1.4', color: '#ddd' }}>
-              Création d'une application éducative gamifiée pour l'apprentissage de l'espagnol.
+          <div className="mb-3">
+            <strong className="text-white">Juego de Calamar</strong>
+            <p className="text-sm text-gray-300 leading-relaxed mt-1 m-0">
+              Application éducative gamifiée pour l'apprentissage de l'espagnol. Premier exercice d'UX : concevoir pour un public non-technique.
             </p>
           </div>
 
           <div>
-            <strong style={{ color: '#fff' }}>Logiciel d'information</strong>
-            <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', lineHeight: '1.4', color: '#ddd' }}>
-              Chef de projet sur le développement d'un outil de centralisation et d'affichage dynamique des actualités pour le Lycée Marcel Rudloff.
+            <strong className="text-white">Logiciel d'information</strong>
+            <p className="text-sm text-gray-300 leading-relaxed mt-1 m-0">
+              Chef de projet à 20 ans. Coordination d'une équipe dev, gestion du client (Lycée Marcel Rudloff), livraison d'un outil de centralisation d'actualités en production réelle.
             </p>
           </div>
         </div>

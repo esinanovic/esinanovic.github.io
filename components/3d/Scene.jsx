@@ -10,11 +10,13 @@ import Sun from './Sun'
 import CameraRig from './CameraRig'
 import PlanetMercury from './PlanetMercury'
 import PlanetVenus from './PlanetVenus'
-
-// import PlanetEarth from './PlanetEarth'
-// import PlanetMars from './PlanetMars'
-// import PlanetJupiter from './PlanetJupiter'
-// import PlanetSaturn from './PlanetSaturn'
+import PlanetEarth from './PlanetEarth'
+import PlanetMars from './PlanetMars'
+import AsteroidBelt from './AsteroidBelt'
+import PlanetJupiter from './PlanetJupiter'
+import PlanetSaturn from './PlanetSaturn'
+import PlanetUranus from './PlanetUranus'
+import PlanetNeptune from './PlanetNeptune'
 
 export default function Scene() {
   // Gestion adaptative du Device Pixel Ratio (DPR)
@@ -43,8 +45,15 @@ export default function Scene() {
       />
 
       {/* 2. LUMIÈRES GLOBALES */}
-      {/* Lumière ambiante très faible pour l'espace. Le Soleil aura sa propre PointLight */}
-      <ambientLight intensity={0.05} />
+      {/* On augmente un tout petit peu l'ambiance pour déboucher les ombres noires pures */}
+      <ambientLight intensity={0.2} />
+      
+      {/* NOUVEAU : Les rayons du soleil qui voyagent le long de l'axe Z pour éclairer toutes les planètes */}
+      <directionalLight 
+        position={[0, 0, 10]} 
+        intensity={2.7} 
+        color="#ffddaa" 
+      />
 
       {/* 3. ENVIRONNEMENT SPATIAL */}
       <Stars
@@ -54,7 +63,7 @@ export default function Scene() {
         factor={4}
         saturation={0}
         fade
-        speed={0} // Statique : évite de recalculer la position de 5000 particules à chaque frame
+        speed={0}
       />
 
       {/* 4. CHARGEMENT ASYNCHRONE DES OBJETS LOURDS */}
@@ -63,11 +72,14 @@ export default function Scene() {
         <Sun />
         <PlanetMercury /> 
         <PlanetVenus />
-        {/* <PlanetEarth /> */}
-        {/* <PlanetMars /> */}
-        {/* <PlanetJupiter /> */}
-        {/* <PlanetSaturn /> */}
-        
+        <PlanetEarth />
+        <PlanetMars />
+        <AsteroidBelt position={[0, 0, -160]} />
+        <PlanetJupiter />
+        <PlanetSaturn />
+        <PlanetUranus />
+        <PlanetNeptune />
+        <AsteroidBelt position={[0, 0, -500]} />
         <CameraRig />
       </Suspense>
 

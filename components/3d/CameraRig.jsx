@@ -1,7 +1,7 @@
 // ============================================================
 // components/3d/CameraRig.jsx
-// Rôle : Orchestration GSAP du mouvement de caméra sur l'axe Z
-// Dépendances : @react-three/fiber, gsap, three
+// Timeline étendue à Neptune — Total : 515 unités
+// Vitesse constante : duration proportionnelle à la distance Z
 // ============================================================
 'use client'
 
@@ -11,20 +11,14 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-// Enregistrement du plugin GSAP
 gsap.registerPlugin(ScrollTrigger)
 
 export default function CameraRig() {
   const { camera } = useThree()
-  
-  // Proxy pour animer la cible de la caméra (LookAt) via GSAP
   const targetProxy = useRef({ x: 0, y: 0, z: 0 })
-  
-  // Vecteur réutilisable pour le useFrame (Loi Zéro-Allocation)
   const lookAtVec = useRef(new THREE.Vector3(0, 0, 0))
 
   useEffect(() => {
-    // Position initiale stricte
     camera.position.set(0, 0, 15)
     targetProxy.current = { x: 0, y: 0, z: 0 }
 
@@ -34,46 +28,51 @@ export default function CameraRig() {
           trigger: "#scroll-container",
           start: "top top",
           end: "bottom bottom",
-          scrub: 1.5, // Amortissement soyeux de 1.5s
+          scrub: 1.5,
         }
       })
 
-      // La timeline est construite sur 100 unités de temps (représentant 0 à 100% du scroll)
-      
-      // SECTION 0 -> 1 (0% à 15%) : Dépasse le Soleil, approche Mercure
-      tl.to(camera.position, { x: -4, y: 1, z: -15, duration: 15, ease: "none" }, 0)
-        .to(targetProxy.current, { x: 0, y: 0, z: -30, duration: 15, ease: "none" }, 0)
+      // sec1 — Soleil → Mercure (z: -30, dist: 30)
+      tl.to(camera.position,    { x: -4, y: 1,  z: -15,  duration: 30, ease: "none" }, "sec1")
+        .to(targetProxy.current, { x: 0,  y: 0,  z: -30,  duration: 30, ease: "none" }, "sec1")
 
-      // SECTION 1 -> 2 (15% à 30%) : Dépasse Mercure, approche Vénus
-      tl.to(camera.position, { x: 4, y: -1, z: -45, duration: 15, ease: "none" }, 15)
-        .to(targetProxy.current, { x: 0, y: 0, z: -60, duration: 15, ease: "none" }, 15)
+      // sec2 — Mercure → Vénus (z: -60, dist: 30)
+      tl.to(camera.position,    { x: 4,  y: -1, z: -45,  duration: 30, ease: "none" }, "sec2")
+        .to(targetProxy.current, { x: 0,  y: 0,  z: -60,  duration: 30, ease: "none" }, "sec2")
 
-      // SECTION 2 -> 3 (30% à 45%) : Dépasse Vénus, approche Terre
-      tl.to(camera.position, { x: -5, y: 2, z: -75, duration: 15, ease: "none" }, 30)
-        .to(targetProxy.current, { x: 0, y: 0, z: -90, duration: 15, ease: "none" }, 30)
+      // sec3 — Vénus → Terre (dist: 30)
+      tl.to(camera.position,    { x: -5, y: 2,  z: -75,  duration: 30, ease: "none" }, "sec3")
+        .to(targetProxy.current, { x: 0,  y: 0,  z: -90,  duration: 30, ease: "none" }, "sec3")
 
-      // SECTION 3 -> 4 (45% à 60%) : Dépasse Terre, approche Mars
-      tl.to(camera.position, { x: 5, y: -2, z: -105, duration: 15, ease: "none" }, 45)
-        .to(targetProxy.current, { x: 0, y: 0, z: -120, duration: 15, ease: "none" }, 45)
+      // sec4 — Terre → Mars (dist: 30)
+      tl.to(camera.position,    { x: 5,  y: -2, z: -105, duration: 30, ease: "none" }, "sec4")
+        .to(targetProxy.current, { x: 0,  y: 0,  z: -120, duration: 30, ease: "none" }, "sec4")
 
-      // SECTION 4 -> 5 (60% à 75%) : Dépasse Mars, approche Jupiter
-      tl.to(camera.position, { x: -8, y: 3, z: -135, duration: 15, ease: "none" }, 60)
-        .to(targetProxy.current, { x: 0, y: 0, z: -160, duration: 15, ease: "none" }, 60)
+      // sec5 — Mars → Jupiter (dist: 70)
+      tl.to(camera.position,    { x: -18, y: 4, z: -175, duration: 70, ease: "none" }, "sec5")
+        .to(targetProxy.current, { x: 0,   y: 0, z: -200, duration: 70, ease: "none" }, "sec5")
 
-      // SECTION 5 -> 6 (75% à 90%) : Dépasse Jupiter, approche Saturne
-      tl.to(camera.position, { x: 6, y: 1, z: -180, duration: 15, ease: "none" }, 75)
-        .to(targetProxy.current, { x: 0, y: 0, z: -210, duration: 15, ease: "none" }, 75)
+      // sec6 — Jupiter → Saturne (dist: 100)
+      tl.to(camera.position,    { x: 14, y: 2,  z: -275, duration: 100, ease: "none" }, "sec6")
+        .to(targetProxy.current, { x: 0,  y: 0,  z: -300, duration: 100, ease: "none" }, "sec6")
 
-      // SECTION 6 FINALE (90% à 100%) : Décélération face à Saturne
-      tl.to(camera.position, { x: 6, y: 1, z: -200, duration: 10, ease: "power2.out" }, 90)
-        .to(targetProxy.current, { x: 0, y: 0, z: -210, duration: 10, ease: "power2.out" }, 90)
+      // sec7 — Saturne → Uranus (dist: 85)
+      tl.to(camera.position,    { x: -8, y: -1, z: -360, duration: 85, ease: "none" }, "sec7")
+        .to(targetProxy.current, { x: 0,  y: 0,  z: -380, duration: 85, ease: "none" }, "sec7")
+
+      // sec8 — Uranus → ceinture d'astéroïdes (dist: 60)
+      tl.to(camera.position,    { x: 0, y: 0, z: -420, duration: 60, ease: "none" }, "sec8")
+        .to(targetProxy.current, { x: 0, y: 0, z: -440, duration: 60, ease: "none" }, "sec8")
+
+      // sec9 — Ceinture → Neptune (z: -480, dist: 80) — NOUVEAU
+      // Approche par la droite pour alterner avec Uranus qui était à gauche
+      tl.to(camera.position,    { x: 12, y: 2, z: -465, duration: 80, ease: "power2.out" }, "sec9")
+        .to(targetProxy.current, { x: 0,  y: 0, z: -480, duration: 80, ease: "power2.out" }, "sec9")
     })
 
-    // NETTOYAGE GSAP OBLIGATOIRE
     return () => ctx.revert()
   }, [camera])
 
-  // BOUCLE DE RENDU : Mise à jour de la cible de la caméra sans allocation mémoire
   useFrame(() => {
     lookAtVec.current.set(
       targetProxy.current.x,
@@ -83,5 +82,5 @@ export default function CameraRig() {
     camera.lookAt(lookAtVec.current)
   })
 
-  return null // Ce composant ne rend rien visuellement, il contrôle la logique
+  return null
 }
